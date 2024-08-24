@@ -18,9 +18,9 @@ def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
     y = [solver_classic.IntVar(0, 1, f"y({j})") for j in range(nb_rouleaux)]
     x = [
         [
-            solver_classic.IntVar(0, solver_classic.infinity(), f"x({i},{j})") for i in range(nb_rouleaux)
+            solver_classic.IntVar(0, solver_classic.infinity(), f"x({i},{j})") for j in range(nb_rouleaux)
         ] 
-        for j in range(nb_piece)
+        for i in range(nb_piece)
     ]
 
     ### (1) Objective function: Minimize the number of used rolls
