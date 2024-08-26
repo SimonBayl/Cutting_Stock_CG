@@ -7,11 +7,10 @@ import time
 import csv
 
 def compute_n_compare():
-    
 
-    rouleaux_range = [x+4 for x in range(100)]
-    pieces_range = [x for x in range(100)]
-    largeur_max = 1000
+    rouleaux_range = [x + 10 + round(x**(1.3)) for x in range(50)]
+    pieces_range = [x for x in range(50)]
+    largeur_max = 100
 
     results = []
     nb_experience = len(rouleaux_range)
@@ -35,7 +34,7 @@ def compute_n_compare():
             time_milp = None
         else:
             time_milp = t4 - t3
-            
+
             
         results.append({
             'nb_rouleaux': rouleaux_range[index],
@@ -46,7 +45,7 @@ def compute_n_compare():
             'objective_classic_MILP': master_objective_milp
         })
 
-    with open('benchmark_results.csv', 'w', newline='') as csvfile:
+    with open('benchmark_results_constant_demand.csv', 'w', newline='') as csvfile:
         fieldnames = ['nb_rouleaux', 'nb_piece', 'time_branch_and_price', 'time_classic_MILP',
                       'objective_branch_and_price', 'objective_classic_MILP']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -60,24 +59,23 @@ def compute_n_compare():
 
 def main():
     """This function runs a benchmark over 2 differents method for a cutting stock problem."""
-    
-    
-    # compute_n_compare()
-
-    nb_rouleaux = 10
-    nb_piece, largeur_max = 8, 1000
-    data = get_data(nb_piece,largeur_max) # demande_max = 35*nb_pièces*40 <= nb_rouleau*largeur_max
 
 
+    compute_n_compare()
 
-    t1 = time.time()
-    master_objective, solution_vector = branch_and_price(data, nb_piece, nb_rouleaux)
-    t2 = time.time()
-    print(t2-t1)
-    print(solution_vector)
-    master_objective, solution_vector = classic_MILP(data, nb_piece, nb_rouleaux)
-    t3 = time.time()
-    print(t3-t2)
+    # nb_rouleaux = 350
+    # nb_piece, largeur_max = 20, 100
+    # data = get_data(nb_piece,largeur_max) # demande_max = 35*nb_pièces*40 <= nb_rouleau*largeur_max
+
+
+    # t1 = time.time()
+    # master_objective, solution_vector = branch_and_price(data, nb_piece, nb_rouleaux)
+    # t2 = time.time()
+    # print(t2-t1)
+    # print(solution_vector)
+    # master_objective, solution_vector = classic_MILP(data, nb_piece, nb_rouleaux)
+    # t3 = time.time()
+    # print(t3-t2)
 
 
 if __name__ == "__main__":

@@ -2,17 +2,21 @@ import numpy as np
 from ortools.linear_solver import pywraplp
 from data_gen import data_generator
 
-def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
-    """Resolve a cutting stock problem with a classic formulation.
+def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 360):
+    """Resolve a cutting stock problem with a classic formulation with a time limit.
     
     (1): Minimize the number of used rolls.
     (2): Do not exceed rolls' lengths.
     (3): Every order has to be cut sufficiently often to fit the demand.
     (4): Cutting a roll is equivalent to using it.
+    (5): Apply a time limit for the solver.
     """
 
     # OR-Tools model
     solver_classic = pywraplp.Solver('SolveMIP_pricing', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    
+    # Set time limit in milliseconds
+    solver_classic.SetTimeLimit(time_limit_seconds * 1000)
     
     # Decision variables
     y = [solver_classic.IntVar(0, 1, f"y({j})") for j in range(nb_rouleaux)]
@@ -47,8 +51,11 @@ def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
             solver_classic.Add(
                 x[i][j] <= data.pieces[i].d * y[j]
             )
+
+    # Solve the problem
     status = solver_classic.Solve()
 
+    # Check if an optimal solution was found within the time limit
     if status == pywraplp.Solver.OPTIMAL:
         print("Optimal solution found.")
         print(f"Objective value: {solver_classic.Objective().Value()}")
@@ -60,6 +67,9 @@ def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
                 solution_x[i][j] = x[i][j].solution_value()
         
         return solver_classic.Objective().Value(), solution_y
+    elif status == pywraplp.Solver.FEASIBLE:
+        print("A feasible solution was found within the time limit.")
+        return None, None
     else:
-        print("No optimal solution found.")
+        print("No feasible solution found or time limit reached.")
         return None, None

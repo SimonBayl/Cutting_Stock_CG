@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import time
 from ortools.linear_solver import pywraplp
 from data_gen import data_generator
 import heapq
@@ -93,8 +94,11 @@ def master_problem_integer(pattern: np.array, data: data_generator.data_cs, nb_p
         return None, None, status
 
 
-def branch_and_price(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
-    """Main branch-and-price algorithm for the cutting stock problem."""
+def branch_and_price(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 360):
+    """Main branch-and-price algorithm for the cutting stock problem with a time limit."""
+    
+    start_time = time.time()  # Start the timer
+
     pattern = generate_pattern(nb_piece, data)
     upper_bound = float('inf')
     lower_bound = -float('inf')
@@ -110,6 +114,12 @@ def branch_and_price(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: i
     heapq.heappush(heap, (master_obj, pattern))
 
     while heap:
+        # Check the elapsed time
+        elapsed_time = time.time() - start_time
+        if elapsed_time > time_limit_seconds:
+            print(f"Time limit of {time_limit_seconds} seconds reached. Stopping the algorithm.")
+            return None, None
+
         current_obj, current_pattern = heapq.heappop(heap)
 
         if current_obj >= upper_bound:
