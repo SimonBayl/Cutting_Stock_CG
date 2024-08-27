@@ -8,8 +8,8 @@ import csv
 
 def compute_n_compare():
 
-    rouleaux_range = [x + 10 + round(x**(1.3)) for x in range(50)]
-    pieces_range = [x for x in range(50)]
+    rouleaux_range = [x + 10 + round(x**(1.3)) for x in range(10)]
+    pieces_range = [x for x in range(10)]
     largeur_max = 100
 
     results = []
@@ -54,7 +54,7 @@ def compute_n_compare():
         for result in results:
             writer.writerow(result)
 
-    print("Les résultats ont été sauvegardés dans benchmark_results.csv")
+    print("Les résultats ont été sauvegardés dans benchmark_results_demand.csv")
 
 
 def main():
