@@ -94,8 +94,10 @@ def master_problem_integer(pattern: np.array, data: data_generator.data_cs, nb_p
         return None, None, status
 
 
-def branch_and_price(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 360):
+def branch_and_price(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 120):
     """Main branch-and-price algorithm for the cutting stock problem with a time limit."""
+
+    print(time_limit_seconds)
     
     start_time = time.time()  # Start the timer
 

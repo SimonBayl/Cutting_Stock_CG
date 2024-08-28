@@ -8,8 +8,8 @@ import csv
 
 def compute_n_compare():
 
-    rouleaux_range = [x + 10 + round(x**(1.3)) for x in range(10)]
-    pieces_range = [x for x in range(10)]
+    rouleaux_range = [x + 10 + round(x**(1.1)) for x in range(30)]
+    pieces_range = [x for x in range(30)]
     largeur_max = 100
 
     results = []
@@ -35,7 +35,7 @@ def compute_n_compare():
         else:
             time_milp = t4 - t3
 
-            
+
         results.append({
             'nb_rouleaux': rouleaux_range[index],
             'nb_piece': pieces_range[index],
@@ -45,7 +45,7 @@ def compute_n_compare():
             'objective_classic_MILP': master_objective_milp
         })
 
-    with open('benchmark_results_constant_demand.csv', 'w', newline='') as csvfile:
+    with open('benchmark_results_constant_demand_2.csv', 'w', newline='') as csvfile:
         fieldnames = ['nb_rouleaux', 'nb_piece', 'time_branch_and_price', 'time_classic_MILP',
                       'objective_branch_and_price', 'objective_classic_MILP']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)

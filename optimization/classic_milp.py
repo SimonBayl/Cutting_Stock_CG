@@ -2,7 +2,7 @@ import numpy as np
 from ortools.linear_solver import pywraplp
 from data_gen import data_generator
 
-def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 360):
+def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, time_limit_seconds: int = 120):
     """Resolve a cutting stock problem with a classic formulation with a time limit.
     
     (1): Minimize the number of used rolls.
@@ -11,6 +11,8 @@ def classic_MILP(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int, 
     (4): Cutting a roll is equivalent to using it.
     (5): Apply a time limit for the solver.
     """
+    
+    print(time_limit_seconds)
 
     # OR-Tools model
     solver_classic = pywraplp.Solver('SolveMIP_pricing', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
