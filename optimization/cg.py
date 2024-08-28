@@ -17,9 +17,17 @@ def master_problem(pattern: np.array,
                    data: data_generator.data_cs,
                    nb_piece: int,
                    nb_rouleaux: int):
-    """Master problem of the column generation algorithm."""
+    """Master problem of the column generation algorithm with linear relaxation.
 
-    # OR-Tools model
+    This algorithm select a set among given patterns so that all the demand is treated and it minimize the number of rolls (patterns)
+    This problem solve a linear problem to get the dual variables
+    The objective is to compute the cost of each pattern and help the calculation of the reduced costs in the princing problem
+
+    (1): Minimize the number of chosen patterns
+    (2): The sum of given pattern fit the demand
+
+    """
+    # Utilization of GLOP linear solver
     solver = pywraplp.Solver.CreateSolver('GLOP')
     if not solver:
         raise RuntimeError("Failed to create solver.")
@@ -28,13 +36,13 @@ def master_problem(pattern: np.array,
     num_patterns = pattern.shape[0]
     x = [solver.NumVar(0.0, solver.infinity(), f"x({p})") for p in range(num_patterns)]
     
-    # Objective function: Minimize the number of chosen patterns
+    ### (1) Objective function: Minimize the number of used rolls
     objective = solver.Objective()
     for var in x:
         objective.SetCoefficient(var, 1)
     objective.SetMinimization()
 
-    # Constraints: The sum of chosen patterns should fit the demand
+    ### (1) Constraint: The sum of given pattern fit the demand
     constraints = []
     for i in range(nb_piece):
         constraint = solver.Add(sum(pattern[p, i] * x[p] for p in range(num_patterns)) >= data.pieces[i].d)
@@ -42,6 +50,7 @@ def master_problem(pattern: np.array,
 
     status = solver.Solve()
 
+    # if the status is optimal then we get the dual variables
     if status == pywraplp.Solver.OPTIMAL:
         dual_variables = [const.dual_value() for const in constraints]
         return dual_variables, objective.Value(), [var.solution_value() for var in x], status
@@ -51,9 +60,17 @@ def master_problem(pattern: np.array,
 
 
 def pricing_problem(data, dual_variables):
-    """Create a feasible pattern to feed the master problem."""
+    """Pricing problem of column generation algorithm.
+
+    This algorithm create feasible patterns to feed the master problem, the patterns are generated so that they reduce the objective function.
+    We solve an integer problem to get integer feasible patterns
+
+    (1): Minimize the reduced costs (gradiant of the objective function of the master problem (=1) * direction of a feasible solution)/
+    (2): The sum of cuts should be less than the total length of a roll.
+
+    """
     
-    # OR-Tools model
+    # Integer solver (should be the same than for the MILP model)
     solver_pricing = pywraplp.Solver.CreateSolver('SCIP')
     if not solver_pricing:
         raise RuntimeError("Failed to create solver.")
@@ -61,17 +78,18 @@ def pricing_problem(data, dual_variables):
     # Decision variables
     y = [solver_pricing.IntVar(0, solver_pricing.infinity(), f"y({i})") for i in range(len(dual_variables))]
     
-    # Objective function: Minimize the reduced costs
+    ### (1) Objective function: Minimize the reduced costs
     objective = solver_pricing.Objective()
     for i, dual in enumerate(dual_variables):
         objective.SetCoefficient(y[i], dual)
     objective.SetMaximization() 
 
-    # Constraint: Pattern should meet the length constraint
+    ### (1) Constraint: Sum of cuts should be less then the total length
     solver_pricing.Add(sum(data.pieces[i].w * y[i] for i in range(len(dual_variables))) <= data.W)
 
     status = solver_pricing.Solve()
 
+    # If the reduced costs are negative, we add the pattern to the master problem
     if status == pywraplp.Solver.OPTIMAL and objective.Value() > 1 + 1e-8:
         return np.array([y[i].solution_value() for i in range(len(dual_variables))])
     else:
@@ -79,9 +97,17 @@ def pricing_problem(data, dual_variables):
 
 
 def master_problem_integer(pattern: np.array, data: data_generator.data_cs, nb_piece: int):
-    """Master problem of the column generation algorithm with integer constraints."""
+    """Final problem of the column generation algorithm with integer constraints.
+    
+    This algorithm select a set among given patterns so that all the demand is treated and it minimize the number of rolls (patterns)
+    This problem perform a mixed integer programming problem in order to get the final solution
+    
+    (1): Minimize the number of chosen patterns
+    (2): The sum of given pattern fit the demand
+    
+    """
   
-    # OR-Tools model
+    # Solver using CBC for mixed integer programming 
     solver = pywraplp.Solver.CreateSolver('CBC_MIXED_INTEGER_PROGRAMMING')
     if not solver:
         raise RuntimeError("Failed to create solver.")
@@ -90,13 +116,13 @@ def master_problem_integer(pattern: np.array, data: data_generator.data_cs, nb_p
     num_patterns = pattern.shape[0]
     x = [solver.IntVar(0, 1, f"x({p})") for p in range(num_patterns)]
 
-    # Objective function: Minimize the number of chosen patterns
+    ### (1) Objective function: Minimize the number of used rolls
     objective = solver.Objective()
     for var in x:
         objective.SetCoefficient(var, 1)
     objective.SetMinimization()
 
-    # Constraints: The sum of chosen patterns should fit the demand
+    ### (2) Constraint: The sum of given pattern fit the demand
     constraints = []
     for i in range(nb_piece):
         constraint = solver.Add(sum(pattern[p, i] * x[p] for p in range(num_patterns)) >= data.pieces[i].d)
@@ -143,4 +169,3 @@ def main_gc(data: data_generator.data_cs, nb_piece: int, nb_rouleaux: int):
         iter_count += 1
 
     raise ValueError("GC method did not converge within the maximum number of iterations.")
-
